@@ -6,37 +6,27 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-int client_startup(char *ipaddr, int port);
 int shell_startup(int s);
 
 int main(int argc, char *argv[])
 {
-  shell_startup (client_startup(argv[1], atoi(argv[2])));
-
-
-  return 0;
-}
-
-// connects to server using a tcp connection
-int client_startup (char *ipaddr, int port)
-{
   int sd;
   struct sockaddr_in server_address;
-  //char buffer[100];
+  char buffer[100];
   int portNumber;
   char serverIP[29];
   int rc = 0;
 
-  if (argc < 4){
-    printf ("usage is client <ipaddr> <port> <number> \n");
+  if (argc < 3){
+    printf ("usage is client <ipaddr> <port> < number> \n");
     exit(1);
   }
 
   sd = socket(AF_INET, SOCK_STREAM, 0);
 
-  portNumber = strtol(port, NULL, 10);
-  strcpy(serverIP, ipaddr);
-  //sprintf (buffer, "hello world from %s \n", argv[3]);
+  portNumber = strtol(argv[2], NULL, 10);
+  strcpy(serverIP, argv[1]);
+  sprintf (buffer, "hello world from %s \n", argv[1]);
   server_address.sin_family = AF_INET;
   server_address.sin_port = htons(portNumber);
   server_address.sin_addr.s_addr = inet_addr(serverIP);
@@ -46,7 +36,22 @@ int client_startup (char *ipaddr, int port)
     perror ("error connecting stream socket ");
     exit (1);
   }
+
+  shell_startup(portNumber);
+
+
+  for (;;){
+    rc = write (sd, buffer, strlen(buffer));
+    if (rc < 0)
+      perror ("write");
+    printf ("sent  %d bytes\n", rc);
+    sleep (3);
+  }
+
+
+  return 0;
 }
+
 
 // starts up a local shell to send commands to remote server shell
 int shell_startup(int s)
