@@ -11,7 +11,8 @@ int main(int argc, char *argv[])
 {
   int sd;
   struct sockaddr_in server_address;
-  char buffer[100];
+  char buffer[256];
+  char shellDir[80];
   int portNumber;
   char serverIP[29];
   int rc = 0;
@@ -31,7 +32,6 @@ int main(int argc, char *argv[])
   }
   else
       printf("Successfully created socket connection..\n");
-  //bzero(&servaddr, sizeof(servaddr));
   portNumber = strtol(argv[2], NULL, 10);
   strcpy(serverIP, argv[1]);
   server_address.sin_family = AF_INET;
@@ -43,12 +43,12 @@ int main(int argc, char *argv[])
     close (sd);
     perror ("error connecting stream socket ");
     exit (1);
-  } else printf("Sneakily Connected..\n");
+  } else printf("Successfully Connected..\n");
 
   int n;
   for (;;) {
       //clears memory buffer
-      memset(buffer,0,100);
+      memset(buffer,0,256);
       //emulates shell
       printf("$ ");
       n = 0;
@@ -56,17 +56,23 @@ int main(int argc, char *argv[])
       while ((buffer[n++] = getchar()) != '\n');
       //checks to see if user wants to exit shell
       if ((strncmp(buffer, "exit", 4)) == 0) {
-          printf("Client Sneakiliy Exiting...\n");
+          printf("Client Sneakily Exiting...\n");
           break;
       }
       //sends command to sever
       write(sd, buffer, sizeof(buffer));
       //clears buffer to use for recieving
-      memset(buffer,0,100);
-      //reads input sent from server
+      memset(buffer,0,256);
+      memset(shellDir,0,80);
+      //reads input sent from server about working dir
+      read(sd, shellDir, sizeof(shellDir);
+      //reads input sent from server about command
       read(sd, buffer, sizeof(buffer));
+      //test print statements
+      //sprintf(shellDir, "nunderwood@nunderwood-VirtualBox~/Downloads/sshell");
+      //sprintf(buffer, "/home/nunderwood/Downloads/sshell");
       //prints message from server
-      printf("$  %s", buffer);
+      printf("[%s]$ \n[%s]", shellDir, buffer);
       //prints new line for continued input commands
       printf("\n");
   }
