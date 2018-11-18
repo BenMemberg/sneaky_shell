@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -28,29 +29,43 @@ int main()
   server_address.sin_port = htons(24000);
   server_address.sin_addr.s_addr = INADDR_ANY;
 
-  bind (sd, (struct sockaddr *)&server_address, sizeof(server_address));
+  if((bind (sd, (struct sockaddr *)&server_address, sizeof(server_address))) != 0){
+    printf("socket bind failed...\n");
+    exit(0);
+  } else printf("Socket successfully binded..\n");
 
-  listen (sd, 5);
-  maxSD = sd; // NEW
-  for(;;){// NEW
+  if((listen (sd, 5)) != 0){
+    printf("Listen failed...\n");
+    exit(0);
+  } else printf("Server listening..\n");
+
+  maxSD = sd;
+  for(;;){
     memset (buffer, 0, 100);
-    FD_ZERO(&socketFDS);// NEW
-    FD_SET(sd, &socketFDS); //NEW - sets the bit for the initial SD
-    FD_SET(clientSD, &socketFDS);
-    if (clientSD > maxSD)
-      maxSD = clientSD;
+    FD_ZERO(&socketFDS);
+    FD_SET(sd, &socketFDS); //Sets the bit for the initial SD
 
     rc = select (maxSD+1, &socketFDS, NULL, NULL, NULL); // NEW block until something arrives
 
-    if (FD_ISSET(sd, &socketFDS)){ // NEW
+    if (FD_ISSET(sd, &socketFDS)){
 	    connected_sd = accept (sd, (struct sockaddr *) &from_address, &fromLength);
-
+      if (connected_sd < 0) {
+          printf("server acccept failed...\n");
+          exit(0);
+      } else printf("server acccept the client...\n");
+      printf("Client connected with descriptor: %i\n", connected_sd);
       clientSD = connected_sd;
+      FD_SET(clientSD, &socketFDS);
+      if (clientSD > maxSD)
+        maxSD = clientSD;
+	    if (FD_ISSET(clientSD, &socketFDS)){
+        printf("Entered read stage\n");
+	      rc = read(clientSD, &buffer, 100);
+	      if (rc == 0 ){ //  the client disconnected
+          printf("client disconnected\n");
+          FD_CLR(clientSD, &socketFDS);
+	        close (clientSD); // close the socket
 
-	    if (FD_ISSET(clientSD, &socketFDS)){ //NEW
-	      rc = read(clientSD, &buffer, 100);//NEW
-	      if (rc == 0 ){ // NEW - the client disconnected
-	        close (clientSD); // NEW close the socket
 	      }
 	      else
 	        printf ("rc from read  %d received the following %s\n", rc, buffer);

@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     exit (1);
   }
 
-  shell_startup(portNumber);
+  //shell_startup(portNumber);
 
 
   for (;;){
