@@ -6,7 +6,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-//#define MAXCLIENTS 10  //NEW
+#define BUFFSIZE 256;
+
 int main()
 {
   int sd; /* socket descriptor */
@@ -14,7 +15,7 @@ int main()
   int rc; /* return code from recvfrom */
   struct sockaddr_in server_address;
   struct sockaddr_in from_address;
-  char buffer[100];
+  char buffer[BUFFSIZE];
   int flags = 0;
   socklen_t fromLength;
   //int clientSDList[MAXCLIENTS] = {0}; // NEW
@@ -41,7 +42,7 @@ int main()
 
   maxSD = sd;
   for(;;){
-    memset (buffer, 0, 100);
+    memset (buffer, 0, BUFFSIZE);
     FD_ZERO(&socketFDS);
     FD_SET(sd, &socketFDS); //Sets the bit for the initial SD
 
