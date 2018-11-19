@@ -6,7 +6,17 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define BUFFSIZE 256;
+#define BUFFSIZE 256
+
+void runCmd(char *cmd, char *buff){
+  FILE* cmdOut = popen(cmd, "r");
+  if(cmdOut == NULL){
+    perror("popen");
+    exit(1);
+  }
+  fgets(buff, BUFFSIZE, cmdOut);
+  pclose(cmdOut);
+}
 
 int main()
 {
@@ -15,7 +25,9 @@ int main()
   int rc; /* return code from recvfrom */
   struct sockaddr_in server_address;
   struct sockaddr_in from_address;
-  char buffer[BUFFSIZE];
+  char clientCmd[BUFFSIZE];
+  char wdBuff[BUFFSIZE];
+  char cmdMsg[BUFFSIZE];
   int flags = 0;
   socklen_t fromLength;
   //int clientSDList[MAXCLIENTS] = {0}; // NEW
@@ -23,6 +35,9 @@ int main()
   fd_set socketFDS; // NEW
   int maxSD = 0;//NEW
   int i;
+
+  runCmd("pwd", wdBuff);
+  printf("cmd output: %s\n", wdBuff);
 
   sd = socket (AF_INET, SOCK_STREAM, 0);
 
@@ -42,7 +57,9 @@ int main()
 
   maxSD = sd;
   for(;;){
-    memset (buffer, 0, BUFFSIZE);
+    memset (clientCmd, 0, BUFFSIZE);
+    memset (wdBuff, 0, BUFFSIZE);
+    memset (cmdMsg, 0, BUFFSIZE);
     FD_ZERO(&socketFDS);
     FD_SET(sd, &socketFDS); //Sets the bit for the initial SD
 
@@ -54,25 +71,41 @@ int main()
           printf("server acccept failed...\n");
           exit(0);
       } else printf("server acccept the client...\n");
-      printf("Client connected with descriptor: %i\n", connected_sd);
+      //printf("Client connected with descriptor: %i\n", connected_sd);
       clientSD = connected_sd;
       FD_SET(clientSD, &socketFDS);
       if (clientSD > maxSD)
         maxSD = clientSD;
 	    if (FD_ISSET(clientSD, &socketFDS)){
-        printf("Entered read stage\n");
-	      rc = read(clientSD, &buffer, 100);
+        // get working directory to send to client
+        runCmd("pwd", wdBuff);
+        // write dir to client socket
+        write(clientSD, wdBuff, BUFFSIZE);
+        // read client comand off socket
+	      rc = read(clientSD, clientCmd, BUFFSIZE);
+        // run client command and get the terminal return
+        runCmd(clientCmd, cmdMsg);
+        //write the command return to the client socket
+        write(clientSD, cmdMsg, BUFFSIZE);
+
 	      if (rc == 0 ){ //  the client disconnected
           printf("client disconnected\n");
           FD_CLR(clientSD, &socketFDS);
 	        close (clientSD); // close the socket
 
 	      }
-	      else
-	        printf ("rc from read  %d received the following %s\n", rc, buffer);
-	    }// NEW
+	      else {
+          printf ("client issued command: %s\n", clientCmd);
+	        printf ("terminal responded with: %s\n", cmdMsg);
+        }
+	    }else {
+        printf ("Client socket not set in socketFDS\n");
+      }
 
+    } else {
+      printf ("Listening socket not set in socketFDS\n");
     }
-  }// NEW
+  }
+  close(sd);
   return 0;
 }

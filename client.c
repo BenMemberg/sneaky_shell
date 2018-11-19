@@ -48,9 +48,12 @@ int main(int argc, char *argv[])
   int n;
   for (;;) {
       //clears memory buffer
-      memset(buffer,0,256);
+      memset(buffer, 0, 256);
+      memset(shellDir,0,80);
+      //reads input sent from server about working dir
+      read(sd, shellDir, sizeof(shellDir));
       //emulates shell
-      printf("$ ");
+      printf("[Remote Shell][%s]$ ", shellDir);
       n = 0;
       //gets command string from user
       while ((buffer[n++] = getchar()) != '\n');
@@ -62,19 +65,14 @@ int main(int argc, char *argv[])
       //sends command to sever
       write(sd, buffer, sizeof(buffer));
       //clears buffer to use for recieving
-      memset(buffer,0,256);
-      memset(shellDir,0,80);
-      //reads input sent from server about working dir
-      read(sd, shellDir, sizeof(shellDir);
+      memset(buffer, 0, 256);
       //reads input sent from server about command
       read(sd, buffer, sizeof(buffer));
       //test print statements
       //sprintf(shellDir, "nunderwood@nunderwood-VirtualBox~/Downloads/sshell");
       //sprintf(buffer, "/home/nunderwood/Downloads/sshell");
       //prints message from server
-      printf("[%s]$ \n[%s]", shellDir, buffer);
-      //prints new line for continued input commands
-      printf("\n");
+      printf("cmd return: [%s]\n", buffer);
   }
 
   return 0;
