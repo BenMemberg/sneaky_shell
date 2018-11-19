@@ -6,67 +6,76 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-int shell_startup(int s);
 
 int main(int argc, char *argv[])
 {
   int sd;
   struct sockaddr_in server_address;
-  char buffer[100];
+  char buffer[256];
+  char shellDir[80];
   int portNumber;
   char serverIP[29];
   int rc = 0;
 
+  //checks number of command args
   if (argc < 3){
-    printf ("usage is client <ipaddr> <port> < number> \n");
+    printf ("usage is client <ipaddr> <port number> \n");
     exit(1);
   }
 
+  // creates socket connection
   sd = socket(AF_INET, SOCK_STREAM, 0);
-
+  // socket varification
+  if (sd == -1) {
+      printf("Failed to create socket conection...\n");
+      exit(1);
+  }
+  else
+      printf("Successfully created socket connection..\n");
   portNumber = strtol(argv[2], NULL, 10);
   strcpy(serverIP, argv[1]);
-  sprintf (buffer, "hello world from %s \n", argv[1]);
   server_address.sin_family = AF_INET;
   server_address.sin_port = htons(portNumber);
   server_address.sin_addr.s_addr = inet_addr(serverIP);
 
+  // checks connetion between client and server
   if (connect (sd, (struct sockaddr *) &server_address, sizeof (struct sockaddr_in ))<0){
     close (sd);
     perror ("error connecting stream socket ");
     exit (1);
+  } else printf("Successfully Connected..\n");
+
+  int n;
+  for (;;) {
+      //clears memory buffer
+      memset(buffer,0,256);
+      //emulates shell
+      printf("$ ");
+      n = 0;
+      //gets command string from user
+      while ((buffer[n++] = getchar()) != '\n');
+      //checks to see if user wants to exit shell
+      if ((strncmp(buffer, "exit", 4)) == 0) {
+          printf("Client Sneakily Exiting...\n");
+          break;
+      }
+      //sends command to sever
+      write(sd, buffer, sizeof(buffer));
+      //clears buffer to use for recieving
+      memset(buffer,0,256);
+      memset(shellDir,0,80);
+      //reads input sent from server about working dir
+      read(sd, shellDir, sizeof(shellDir);
+      //reads input sent from server about command
+      read(sd, buffer, sizeof(buffer));
+      //test print statements
+      //sprintf(shellDir, "nunderwood@nunderwood-VirtualBox~/Downloads/sshell");
+      //sprintf(buffer, "/home/nunderwood/Downloads/sshell");
+      //prints message from server
+      printf("[%s]$ \n[%s]", shellDir, buffer);
+      //prints new line for continued input commands
+      printf("\n");
   }
-
-  //shell_startup(portNumber);
-
-
-  for (;;){
-    rc = write (sd, buffer, strlen(buffer));
-    if (rc < 0)
-      perror ("write");
-    printf ("sent  %d bytes\n", rc);
-    sleep (3);
-  }
-
-
-  return 0;
-}
-
-
-// starts up a local shell to send commands to remote server shell
-int shell_startup(int s)
-{
-  char *name[3];
-
-  dup2 (s, 0);
-  dup2 (s, 1);
-  dup2 (s, 2);
-
-  name[0] = "/bin/sh";
-  name[1] = "-i";
-  name[2] = NULL;
-  execv (name[0], name);
-  exit(1);
 
   return 0;
 }
