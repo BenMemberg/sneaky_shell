@@ -36,9 +36,6 @@ int main()
   int maxSD = 0;//NEW
   int i;
 
-  runCmd("pwd", wdBuff);
-  printf("cmd output: %s\n", wdBuff);
-
   sd = socket (AF_INET, SOCK_STREAM, 0);
 
   server_address.sin_family = AF_INET;
@@ -55,15 +52,12 @@ int main()
     exit(0);
   } else printf("Server listening..\n");
 
+  FD_ZERO(&socketFDS);
+  FD_SET(sd, &socketFDS); // Sets the bit for the initial SD
   maxSD = sd;
   for(;;){
-    memset (clientCmd, 0, BUFFSIZE);
-    memset (wdBuff, 0, BUFFSIZE);
-    memset (cmdMsg, 0, BUFFSIZE);
-    FD_ZERO(&socketFDS);
-    FD_SET(sd, &socketFDS); //Sets the bit for the initial SD
 
-    rc = select (maxSD+1, &socketFDS, NULL, NULL, NULL); // NEW block until something arrives
+    rc = select (maxSD+1, &socketFDS, NULL, NULL, NULL); // block until something arrives
 
     if (FD_ISSET(sd, &socketFDS)){
 	    connected_sd = accept (sd, (struct sockaddr *) &from_address, &fromLength);
@@ -71,33 +65,43 @@ int main()
           printf("server acccept failed...\n");
           exit(0);
       } else printf("server acccept the client...\n");
-      //printf("Client connected with descriptor: %i\n", connected_sd);
       clientSD = connected_sd;
       FD_SET(clientSD, &socketFDS);
       if (clientSD > maxSD)
         maxSD = clientSD;
 	    if (FD_ISSET(clientSD, &socketFDS)){
-        // get working directory to send to client
-        runCmd("pwd", wdBuff);
-        // write dir to client socket
-        write(clientSD, wdBuff, BUFFSIZE);
-        // read client comand off socket
-	      rc = read(clientSD, clientCmd, BUFFSIZE);
-        // run client command and get the terminal return
-        runCmd(clientCmd, cmdMsg);
-        //write the command return to the client socket
-        write(clientSD, cmdMsg, BUFFSIZE);
+        for(;;){
+          memset (clientCmd, 0, BUFFSIZE);
+          memset (wdBuff, 0, BUFFSIZE);
+          memset (cmdMsg, 0, BUFFSIZE);
+          // get working directory to send to client
+          runCmd("pwd", wdBuff);
+          // write dir to client socket
+          //printf("pre dir write\n");
+          write(clientSD, wdBuff, BUFFSIZE);
+          //printf("post dir write\n");
+          // read client comand off socket
+          //printf("pre client cmd read\n");
+  	      rc = read(clientSD, clientCmd, BUFFSIZE);
+          //printf("post client cmd read\n");
+          // run client command and get the terminal return
+          runCmd(clientCmd, cmdMsg);
+          //write the command return to the client socket
+          //printf("pre cmd return write\n");
+          write(clientSD, cmdMsg, BUFFSIZE);
+          //printf("post cmd return write\n");
 
-	      if (rc == 0 ){ //  the client disconnected
-          printf("client disconnected\n");
-          FD_CLR(clientSD, &socketFDS);
-	        close (clientSD); // close the socket
-
-	      }
-	      else {
-          printf ("client issued command: %s\n", clientCmd);
-	        printf ("terminal responded with: %s\n", cmdMsg);
+  	      if (rc == 0 ){ //  the client disconnected
+            printf("client disconnected\n");
+            FD_CLR(clientSD, &socketFDS);
+  	        close (clientSD); // close the socket
+  	      }
+  	      else {
+            printf ("client issued command: %s\n", clientCmd);
+  	        printf ("terminal responded with: %s\n", cmdMsg);
+          }
         }
+
 	    }else {
         printf ("Client socket not set in socketFDS\n");
       }

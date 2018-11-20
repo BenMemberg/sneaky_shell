@@ -6,13 +6,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#define BUFFSIZE 256
 
 int main(int argc, char *argv[])
 {
   int sd;
   struct sockaddr_in server_address;
-  char buffer[256];
-  char shellDir[80];
+  char buffer[BUFFSIZE];
+  char shellDir[BUFFSIZE];
   int portNumber;
   char serverIP[29];
   int rc = 0;
@@ -48,8 +49,8 @@ int main(int argc, char *argv[])
   int n;
   for (;;) {
       //clears memory buffer
-      memset(buffer, 0, 256);
-      memset(shellDir,0,80);
+      memset(buffer, 0, BUFFSIZE);
+      memset(shellDir, 0, BUFFSIZE);
       //reads input sent from server about working dir
       read(sd, shellDir, sizeof(shellDir));
       //emulates shell
@@ -65,14 +66,14 @@ int main(int argc, char *argv[])
       //sends command to sever
       write(sd, buffer, sizeof(buffer));
       //clears buffer to use for recieving
-      memset(buffer, 0, 256);
+      memset(buffer, 0, BUFFSIZE);
       //reads input sent from server about command
       read(sd, buffer, sizeof(buffer));
       //test print statements
       //sprintf(shellDir, "nunderwood@nunderwood-VirtualBox~/Downloads/sshell");
       //sprintf(buffer, "/home/nunderwood/Downloads/sshell");
       //prints message from server
-      printf("cmd return: [%s]\n", buffer);
+      printf("%s\n", buffer);
   }
 
   return 0;
