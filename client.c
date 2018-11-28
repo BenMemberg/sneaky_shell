@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define BUFFSIZE 256
+#define BUFFSIZE 10000
 
 int main(int argc, char *argv[])
 {
@@ -50,11 +50,14 @@ int main(int argc, char *argv[])
   for (;;) {
       //clears memory buffer
       memset(buffer, 0, BUFFSIZE);
-      memset(shellDir, 0, BUFFSIZE);
+      //memset(shellDir,0,80);
       //reads input sent from server about working dir
-      read(sd, shellDir, sizeof(shellDir));
+      read(sd, buffer, sizeof(buffer));
+      int dirLen = strlen(buffer);
+      char dirStr[200];
+      strncpy(dirStr, buffer, dirLen-1);
       //emulates shell
-      printf("[Remote Shell][%s]$ ", shellDir);
+      printf("[~%s]$ ", dirStr);
       n = 0;
       //gets command string from user
       while ((buffer[n++] = getchar()) != '\n');
@@ -73,8 +76,7 @@ int main(int argc, char *argv[])
       //sprintf(shellDir, "nunderwood@nunderwood-VirtualBox~/Downloads/sshell");
       //sprintf(buffer, "/home/nunderwood/Downloads/sshell");
       //prints message from server
-      printf("%s\n", buffer);
+      printf("\n%s\n", buffer);
   }
-
   return 0;
 }
