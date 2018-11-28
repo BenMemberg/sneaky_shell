@@ -1,0 +1,1 @@
+cmd_/home/kav/Projects/sneaky_shell/kernel.ko := ld -r -m elf_x86_64 -z max-page-size=0x200000 -T ./scripts/module-common.lds --build-id  -o /home/kav/Projects/sneaky_shell/kernel.ko /home/kav/Projects/sneaky_shell/kernel.o /home/kav/Projects/sneaky_shell/kernel.mod.o ;  true

