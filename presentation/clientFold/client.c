@@ -6,13 +6,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#define BUFFSIZE 10000
 
 int main(int argc, char *argv[])
 {
   int sd;
   struct sockaddr_in server_address;
-  char buffer[2500];
-  char shellDir[2500];
+  char buffer[BUFFSIZE];
+  char shellDir[BUFFSIZE];
   int portNumber;
   char serverIP[29];
   int rc = 0;
@@ -48,12 +49,15 @@ int main(int argc, char *argv[])
   int n;
   for (;;) {
       //clears memory buffer
-      memset(buffer, 0, 2500);
+      memset(buffer, 0, BUFFSIZE);
       //memset(shellDir,0,80);
       //reads input sent from server about working dir
       read(sd, buffer, sizeof(buffer));
+      int dirLen = strlen(buffer);
+      char dirStr[200];
+      strncpy(dirStr, buffer, dirLen-1);
       //emulates shell
-      printf("[Remote Shell][%s]$ ", buffer);
+      printf("[~%s]$ ", dirStr);
       n = 0;
       //gets command string from user
       while ((buffer[n++] = getchar()) != '\n');
@@ -65,15 +69,14 @@ int main(int argc, char *argv[])
       //sends command to sever
       write(sd, buffer, sizeof(buffer));
       //clears buffer to use for recieving
-      memset(buffer, 0, 2500);
+      memset(buffer, 0, BUFFSIZE);
       //reads input sent from server about command
       read(sd, buffer, sizeof(buffer));
       //test print statements
       //sprintf(shellDir, "nunderwood@nunderwood-VirtualBox~/Downloads/sshell");
       //sprintf(buffer, "/home/nunderwood/Downloads/sshell");
       //prints message from server
-      printf("cmd return: [%s]\n", buffer);
+      printf("\n%s\n", buffer);
   }
-
   return 0;
 }

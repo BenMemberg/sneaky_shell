@@ -6,7 +6,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define BUFFSIZE 2500
+#define BUFFSIZE 10000
+
 void runCmd(char *cmd, char *buff){
   FILE* cmdOut = popen(cmd, "r");
   if(cmdOut == NULL){
@@ -19,8 +20,11 @@ void runCmd(char *cmd, char *buff){
     puts(buff);
     n = strlen(buff);
     buff = buff+n;
+    if(buffStart+BUFFSIZE < buff){
+      buff=buffStart;
+    }
   }
-  buff = buffStart;
+  //buff = buffStart;
   pclose(cmdOut);
 }
 
@@ -41,9 +45,6 @@ int main()
   fd_set socketFDS; // NEW
   int maxSD = 0;//NEW
   int i;
-
-  runCmd("pwd", wdBuff);
-  printf("cmd output: %s\n", wdBuff);
 
   sd = socket (AF_INET, SOCK_STREAM, 0);
 
@@ -103,6 +104,7 @@ int main()
             printf("client disconnected\n");
             FD_CLR(clientSD, &socketFDS);
 	          close (clientSD); // close the socket
+            break;
 	        }
 	      else {
           printf ("client issued command: %s\n", clientCmd);
