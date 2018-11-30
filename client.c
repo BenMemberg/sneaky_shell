@@ -14,13 +14,13 @@ int main(int argc, char *argv[])
   struct sockaddr_in server_address;
   char buffer[BUFFSIZE];
   char shellDir[BUFFSIZE];
-  int portNumber;
+  //int portNumber;
   char serverIP[29];
   int rc = 0;
 
   //checks number of command args
-  if (argc < 3){
-    printf ("usage is client <ipaddr> <port number> \n");
+  if (argc < 2){
+    printf ("usage is client <ipaddr> \n");
     exit(1);
   }
 
@@ -33,10 +33,10 @@ int main(int argc, char *argv[])
   }
   else
       printf("Successfully created socket connection..\n");
-  portNumber = strtol(argv[2], NULL, 10);
+  //portNumber = strtol(argv[2], NULL, 10);
   strcpy(serverIP, argv[1]);
   server_address.sin_family = AF_INET;
-  server_address.sin_port = htons(portNumber);
+  server_address.sin_port = htons(24000);
   server_address.sin_addr.s_addr = inet_addr(serverIP);
 
   // checks connetion between client and server
@@ -52,13 +52,16 @@ int main(int argc, char *argv[])
       memset(buffer, 0, BUFFSIZE);
       //memset(shellDir,0,80);
       //reads input sent from server about working dir
-      read(sd, buffer, sizeof(buffer));
-      int dirLen = strlen(buffer);
-      char dirStr[200];
-      strncpy(dirStr, buffer, dirLen-1);
+      rc = read(sd, buffer, 200);
+      if (rc == 0 ){
+        printf("Server has closed\n");
+        close (sd); // close the socket
+        break;
+      }
       //emulates shell
-      printf("[~%s]$ ", dirStr);
+      printf("[~%s]$ ", buffer);
       n = 0;
+      memset(buffer, 0, BUFFSIZE);
       //gets command string from user
       while ((buffer[n++] = getchar()) != '\n');
       //checks to see if user wants to exit shell
@@ -66,15 +69,21 @@ int main(int argc, char *argv[])
           printf("Client Sneakily Exiting...\n");
           break;
       }
+      int lastChar = strlen(buffer) - 1;
+      if (buffer[lastChar] == '\n'){
+        buffer[lastChar] = '\0';
+      }
       //sends command to sever
       write(sd, buffer, sizeof(buffer));
       //clears buffer to use for recieving
       memset(buffer, 0, BUFFSIZE);
       //reads input sent from server about command
-      read(sd, buffer, sizeof(buffer));
-      //test print statements
-      //sprintf(shellDir, "nunderwood@nunderwood-VirtualBox~/Downloads/sshell");
-      //sprintf(buffer, "/home/nunderwood/Downloads/sshell");
+      rc = read(sd, buffer, sizeof(buffer));
+      if (rc == 0 ){
+        printf("Server has closed\n");
+        close (sd); // close the socket
+        break;
+      }
       //prints message from server
       printf("\n%s\n", buffer);
   }
