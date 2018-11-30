@@ -76,13 +76,13 @@ void checkCmd(char* cmd, char*buff){
       strcpy(prevDir, workDir);
       // get total length of wd
       int dirLen = strlen(workDir);
-      //
+      // isolate the string to be removed from the dir path
       char * rem = strrchr(workDir, '/');
-      //
+      // get length of the isolated string
       int remLen = strlen(rem);
-      //
+      // get the index to put the blank line character at
       int newDirLen = dirLen - remLen;
-      //
+      // remove the last folder name from the directory path
       workDir[newDirLen] = '\0';
 
     } else if (strncmp(explDir, cmdCrit, 1) == 0){
