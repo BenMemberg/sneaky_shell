@@ -1,6 +1,6 @@
 CC=gcc
 CGLAGS = -g -Wall
-TARGET	= kernel
+TARGET	= sneaky
 
 obj-m	+= $(TARGET).o
 CURRENT = $(shell uname -r)
@@ -11,12 +11,12 @@ all: server client kernel
 kernel:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
-server: server.c
-	$(CC) $(CFLAGS) -o server server.c
+server: sneaky_server.c
+	$(CC) $(CFLAGS) -o sneaky_server sneaky_server.c
 
-client: client.c
-	$(CC) $(CFLAGS) -o client client.c
+client: sneaky_client.c
+	$(CC) $(CFLAGS) -o sneaky_client sneaky_client.c
 
 clean:
-	rm server client
+	rm sneaky_server sneaky_client
 	$(MAKE) -C $(KDIR) M=$(PWD) clean

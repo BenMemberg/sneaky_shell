@@ -9,8 +9,8 @@
 #include <asm/special_insns.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Yann KOETH");
-MODULE_DESCRIPTION("Loadable Kernel Module Syscall");
+MODULE_AUTHOR("Kavin Kaviarasan, Nick, Underwood, and Ben Memberg");
+MODULE_DESCRIPTION("SNEAKY Loadable Kernel Module Syscall");
 MODULE_VERSION("0.1");
 
 #define SYS_CALL_TABLE "sys_call_table"
